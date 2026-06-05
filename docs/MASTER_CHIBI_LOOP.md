@@ -89,12 +89,12 @@
 ---
 
 ## ITERATION 6 — Polish global
-**Status**: PENDING
-- Screen shake sur coups critiques
-- Combo text flottant (×2 ×3...)
-- HUD animations (gold +N flottant)
-- Tower power visual (FIRE/LIGHTNING/WATER aura sur tour)
-- Background animated (nuages, particules)
+**Status**: COMPLETE
+- Screen shake sur mort boss (intensity=14, dur=0.45s) et elite T2+ (6, 0.22s) via call_group("camera_follow","shake") ✓
+- camera_follow.gd: add_to_group("camera_follow") dans setup() pour accès décentralisé ✓
+- Tower power aura : CPUParticles2D _power_aura construit dans _update_power_aura() — FIRE=orange, LIGHTNING=jaune, WATER=bleu avec gravity inverse ✓
+- HUD gold flottant : _spawn_gold_float_label() spawne "+Ng" au-dessus du compteur d'or lors de tout gain ✓
+- Tests : 277/278 passing / 0 failing
 
 ---
 

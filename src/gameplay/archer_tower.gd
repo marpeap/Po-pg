@@ -66,6 +66,7 @@ var _enemy_wave: Node
 var _forge: Node
 var _power: TowerPower = TowerPower.NONE
 var _tier: TowerTier   = TowerTier.WOOD
+var _power_aura: CPUParticles2D = null  ## Elemental power aura node — null when NONE
 
 ## Sprite references — cleared and rebuilt each time the tier changes.
 var _main_sprite:    Sprite2D          = null
@@ -212,6 +213,7 @@ func _input(event: InputEvent) -> void:
 func set_power(power_type: int) -> void:
 	_power = power_type as TowerPower
 	_update_power_label()
+	_update_power_aura()
 
 ## Returns true when powers cost 0g (POWER_CORE item applied).
 func is_power_free() -> bool:
@@ -225,6 +227,45 @@ func _update_power_label() -> void:
 		TowerPower.LIGHTNING: _power_label.text = "[ECLAIR]"
 		TowerPower.WATER:     _power_label.text = "[EAU]"
 		_:                    _power_label.text = ""
+
+## Build or rebuild the elemental power aura CPUParticles2D around the tower base.
+func _update_power_aura() -> void:
+	## Remove old aura.
+	if _power_aura != null and is_instance_valid(_power_aura):
+		_power_aura.queue_free()
+		_power_aura = null
+	if _power == TowerPower.NONE:
+		return
+	## Create new aura — color and speed vary by power type.
+	var p := CPUParticles2D.new()
+	p.name            = "PowerAura"
+	p.emitting        = true
+	p.amount          = 18
+	p.lifetime        = 0.8
+	p.explosiveness   = 0.0
+	p.emission_shape  = CPUParticles2D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 30.0
+	p.direction       = Vector2.UP
+	p.spread          = 180.0
+	p.gravity         = Vector2.ZERO
+	p.initial_velocity_min = 14.0
+	p.initial_velocity_max = 28.0
+	p.scale_amount_min = 2.0
+	p.scale_amount_max = 4.5
+	match _power:
+		TowerPower.FIRE:
+			p.color = Color(1.0, 0.35, 0.05, 0.85)
+			p.initial_velocity_max = 36.0
+		TowerPower.LIGHTNING:
+			p.color = Color(1.0, 0.95, 0.25, 0.90)
+			p.explosiveness = 0.45
+			p.spread = 360.0
+		TowerPower.WATER:
+			p.color = Color(0.20, 0.65, 1.0, 0.80)
+			p.gravity = Vector2(0.0, -18.0)  ## Slightly upward drift for water effect
+	p.position = Vector2(0.0, -20.0)  ## Centered on the tower body, not the base
+	add_child(p)
+	_power_aura = p
 
 func _process(delta: float) -> void:
 	if GameStateMachine.current_state != GameStateMachine.State.PLAYING:

@@ -209,9 +209,28 @@ func setup(
 
 ## Called by Economy when gold changes — updates gold label and all button states.
 func _on_gold_changed(new_gold: int) -> void:
+	var gained: int = new_gold - _current_gold
 	_current_gold = new_gold
 	gold_label.text = str(new_gold) + "g"
 	_refresh_button_states()
+	## Floating "+Ng" label when gold is gained (not spent).
+	if gained > 0 and gold_label != null:
+		_spawn_gold_float_label(gained)
+
+## Spawns a small "+Ng" label that drifts up from the gold label and fades.
+func _spawn_gold_float_label(amount: int) -> void:
+	var lbl := Label.new()
+	lbl.text = "+%dg" % amount
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.10))
+	## Position just above the gold label in screen space.
+	var gpos: Vector2 = gold_label.global_position + Vector2(0.0, -8.0)
+	lbl.position = gpos
+	get_parent().add_child(lbl)
+	var tw := lbl.create_tween()
+	tw.tween_property(lbl, "position:y", gpos.y - 38.0, 0.80)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.80)
+	tw.tween_callback(lbl.queue_free)
 
 ## Called by Castle when HP changes.
 func _on_hp_changed(new_hp: int) -> void:

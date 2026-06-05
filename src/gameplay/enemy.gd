@@ -431,6 +431,12 @@ func _spawn_death_particles(death_pos: Vector2, vtier: int) -> void:
 		func() -> void:
 			if is_instance_valid(p):
 				p.queue_free())
+	## Screen shake — boss death: big shake; elite (T2/T3): medium shake.
+	var is_boss: bool = has_node("BossAura")
+	if is_boss:
+		get_tree().call_group("camera_follow", "shake", 14.0, 0.45)
+	elif vtier >= 2:
+		get_tree().call_group("camera_follow", "shake", 6.0, 0.22)
 
 ## Pool API — hide and disable this enemy. Called after enemy_died or on session reset.
 func deactivate() -> void:

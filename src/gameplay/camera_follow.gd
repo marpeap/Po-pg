@@ -37,6 +37,7 @@ func shake(intensity: float, duration: float) -> void:
 func setup(camera: Camera2D, hero: Node2D) -> void:
 	_camera = camera
 	_hero = hero
+	add_to_group("camera_follow")  ## Allow call_group("camera_follow", "shake", ...) from any system
 	_camera.position_smoothing_enabled = false
 	_camera.limit_left   = LIMIT_LEFT
 	_camera.limit_top    = LIMIT_TOP
