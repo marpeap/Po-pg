@@ -30,6 +30,12 @@ with the "Use Instead" column.
 | `Skeleton3D` signal `bone_pose_updated` | `skeleton_updated` | 4.3 | Renamed |
 | `AnimationPlayer.method_call_mode` | `AnimationMixer.callback_mode_method` | 4.3 | Moved to base class |
 | `AnimationPlayer.playback_active` | `AnimationMixer.active` | 4.3 | Moved to base class |
+| `JSONRPC.set_scope()` | `JSONRPC.set_method()` | 4.5 | **Supprimée** — breaking GDScript + C# |
+| `Node.get_rpc_config()` | `Node.get_node_rpc_config()` | 4.5 | Renommée — breaking GDScript |
+| `RenderingServer.instance_reset_physics_interpolation()` | *(supprimée)* | 4.5 | Gestion interpolation déplacée dans SceneTree |
+| `RenderingServer.instance_set_interpolated()` | *(supprimée)* | 4.5 | Gestion interpolation déplacée dans SceneTree |
+| `EditorFileDialog.add_side_menu()` | *(supprimée)* | 4.6 | Fonctionnalité migrée vers `FileDialog` de base |
+| `OS.read_string_from_stdin()` sans `buffer_size` | `OS.read_string_from_stdin(1024)` | 4.4 | Paramètre désormais requis |
 
 ## Patterns (Not Just APIs)
 

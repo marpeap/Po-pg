@@ -1,0 +1,18 @@
+{
+    "dirs": [
+        "res://tests/unit",
+        "res://tests/unit/foundation",
+        "res://tests/unit/gameplay",
+        "res://tests/unit/ui",
+        "res://tests/unit/archer_formation",
+        "res://tests/unit/economy",
+        "res://tests/unit/forge",
+        "res://tests/integration/gameplay"
+    ],
+    "include_subdirs": true,
+    "prefix": "",
+    "suffix": ".gd",
+    "log_level": 1,
+    "ignore_pause": false,
+    "hide_orphans": true
+}

@@ -5,7 +5,7 @@
 | **Engine Version** | Godot 4.6 |
 | **Release Date** | January 2026 |
 | **Project Pinned** | 2026-02-12 |
-| **Last Docs Verified** | 2026-02-12 |
+| **Last Docs Verified** | 2026-05-17 |
 | **LLM Knowledge Cutoff** | May 2025 |
 
 ## Knowledge Gap Warning
@@ -26,6 +26,8 @@ Always cross-reference this directory before suggesting Godot API calls.
 
 - Official docs: https://docs.godotengine.org/en/stable/
 - 4.5→4.6 migration: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.6.html
-- 4.4→4.5 migration: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.5.html
+- 4.4→4.5 migration: https://docs.godotengine.org/en/4.5/tutorials/migrating/upgrading_to_godot_4.5.html
+- 4.3→4.4 migration: https://docs.godotengine.org/en/4.5/tutorials/migrating/upgrading_to_godot_4.4.html
 - Changelog: https://github.com/godotengine/godot/blob/master/CHANGELOG.md
 - Release notes: https://godotengine.org/releases/4.6/
+- Breaking changes GLSL issue: https://github.com/godotengine/godot-docs/issues/11744

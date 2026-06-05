@@ -1,0 +1,54 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="Garrison"
+run/main_scene="res://src/Main.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+
+[autoload]
+
+GameStateMachine="*res://src/autoloads/game_state_machine.gd"
+AudioManager="*res://src/autoloads/audio_manager.gd"
+ResourceInventory="*res://src/autoloads/resource_inventory.gd"
+ItemInventory="*res://src/autoloads/item_inventory.gd"
+HeroProgression="*res://src/autoloads/hero_progression.gd"
+SkillTree="*res://src/gameplay/skill_tree.gd"
+AchievementSystem="*res://src/gameplay/achievement_system.gd"
+DailyChallenge="*res://src/gameplay/daily_challenge.gd"
+PrestigeSystem="*res://src/gameplay/prestige_system.gd"
+QuestManager="*res://src/gameplay/quest_manager.gd"
+WorldStateManager="*res://src/gameplay/world_state_manager.gd"
+SeasonManager="*res://src/gameplay/season_manager.gd"
+WeatherManager="*res://src/gameplay/weather_manager.gd"
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+window/size/window_width_override=960
+window/size/window_height_override=540
+window/stretch/mode="canvas_items"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+
+[input_devices]
+
+pointing/emulate_touch_from_mouse=true
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.22, 0.45, 0.14, 1)

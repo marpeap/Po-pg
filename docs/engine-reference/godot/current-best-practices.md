@@ -1,6 +1,6 @@
 # Godot — Current Best Practices
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+Last verified: 2026-05-17 | Engine: Godot 4.6
 
 Practices that are **new or changed** since the model's training data (~4.3).
 This supplements (not replaces) the agent's built-in knowledge.
@@ -105,3 +105,46 @@ This supplements (not replaces) the agent's built-in knowledge.
 - **SDL3 gamepad driver**: Better cross-platform gamepad support
 - **Android**: Edge-to-edge display, camera feed access, 16KB page support (Android 15+)
 - **Linux**: Wayland subwindow support for multi-window capability
+
+## Android — Pratiques spécifiques (4.5–4.6)
+
+- **16KB page support** (4.5+) : Requis pour Google Play ciblant Android 15+. Activé par défaut dans Godot 4.5+. Pour C# : .NET 9 minimum requis.
+- **Capteurs désactivés par défaut** (depuis 4.4) : Activer explicitement dans Project Settings → Input Devices → Sensors si besoin (accéléromètre, gyroscope).
+- **Storage Access Framework** (4.6) : Préférer SAF pour l'accès aux fichiers utilisateur — pas besoin de permissions MANAGE_EXTERNAL_STORAGE larges.
+- **Scrcpy intégré** (4.6) : Godot peut lancer automatiquement l'export sur un device Android via scrcpy depuis l'éditeur.
+- **GABE** (4.6) : Gradle Android Build Environment — construire des APK avec plugins Gradle directement depuis l'éditeur Godot.
+- **Structure de build** : Depuis 4.6, les fichiers sources Android sont dans `android/build/src/main/java/` (pas `android/build/src/`).
+- **Safe areas** : Utiliser `DisplayServer.get_display_safe_area()` pour gérer les notchs et barres de navigation. Toujours tester avec `adb shell wm overscan`.
+- **Touch vs Mouse** : Godot 4 peut émuler des events souris depuis le touch. Désactiver si le jeu gère le touch nativement : Project Settings → Input Devices → Pointing → Emulate Mouse From Touch → Off.
+
+## UI — Dual Focus System (4.6)
+
+- Depuis 4.6, le focus souris/touch est **séparé** du focus clavier/gamepad.
+- Les jeux mobiles (touch-only) ne nécessitent plus de gérer le focus clavier.
+- Le feedback visuel (focus outline) s'affiche uniquement pour la navigation clavier/gamepad — pas pour le touch.
+- Pour un jeu Android touch-only : pas besoin de configurer `focus_mode` sur les Control nodes sauf pour l'accessibilité.
+
+## Resources — Duplication (4.5+)
+
+- `duplicate()` : copie superficielle (ressources imbriquées **partagées**)
+- `duplicate_deep()` : copie **profonde** de toute la hiérarchie de ressources
+- `duplicate_deep(RESOURCE_DEEP_DUPLICATE_ALL)` : équivalent de l'ancien `duplicate(true)` en 4.4
+- Règle : toujours utiliser `duplicate_deep()` pour les ressources qui ont des sous-ressources modifiables par instance (stats d'ennemi, inventaire, etc.)
+
+## GDScript — Nouvelles features à adopter (4.5+)
+
+- **`@abstract`** : Forcer l'héritage pour les classes de base (enemies, items, states...)
+  ```gdscript
+  @abstract
+  class_name BaseState extends Node
+  @abstract
+  func enter() -> void: pass
+  @abstract
+  func exit() -> void: pass
+  ```
+- **Variadic args** : Utile pour les systèmes de log et d'événements
+  ```gdscript
+  func emit_event(event_name: StringName, data: Variant...) -> void:
+      EventBus.dispatch(event_name, data)
+  ```
+- **Types statiques** : Toujours typer les variables et retours — le compilateur GDScript optimise les types connus
