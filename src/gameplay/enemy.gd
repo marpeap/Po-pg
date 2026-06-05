@@ -16,14 +16,16 @@ enum EnemyType {
 	ARCHER,     ## Fast, low HP, ranged feel — weaker castle hit
 	CAVALIER,   ## Heavy cavalry — high HP and speed, high damage
 	HEALER,     ## Support unit — heals nearby allies periodically
+	SHIELDER,   ## Armored shielder — 40% damage while shield active (breaks at 50% HP)
 }
 
 ## Per-type base stats: hp, speed, gold, castle_dmg, tint color
 const TYPE_STATS := {
-	EnemyType.INFANTRY: { "hp": 40, "speed": 65.0,  "gold": 12, "castle_dmg": 10, "tint": Color(1.0, 1.0, 1.0) },
-	EnemyType.ARCHER:   { "hp": 22, "speed": 88.0,  "gold": 18, "castle_dmg": 6,  "tint": Color(0.55, 0.80, 1.0) },
+	EnemyType.INFANTRY: { "hp": 40, "speed": 65.0,  "gold": 12, "castle_dmg": 10, "tint": Color(1.0,  1.0,  1.0)  },
+	EnemyType.ARCHER:   { "hp": 22, "speed": 88.0,  "gold": 18, "castle_dmg": 6,  "tint": Color(0.55, 0.80, 1.0)  },
 	EnemyType.CAVALIER: { "hp": 70, "speed": 108.0, "gold": 25, "castle_dmg": 18, "tint": Color(0.85, 0.65, 0.40) },
 	EnemyType.HEALER:   { "hp": 28, "speed": 55.0,  "gold": 22, "castle_dmg": 4,  "tint": Color(0.50, 0.90, 0.50) },
+	EnemyType.SHIELDER: { "hp": 90, "speed": 40.0,  "gold": 20, "castle_dmg": 15, "tint": Color(0.70, 0.82, 1.0)  },
 }
 
 ## Castle world-space position — left-center in landscape world 1920×1080
@@ -54,6 +56,11 @@ var _poison_tick:  float = 0.0
 ## Status effect overlay sprite — replaced each time a new effect is applied.
 var _status_sprite: Sprite2D = null
 
+## SHIELDER shield state — active until HP drops to ≤50% of max
+var _shield_active: bool = false
+## Base modulate tint for this enemy type (set by activate, restored after flash/slow)
+var _base_modulate: Color = Color.WHITE
+
 ## Injected by EnemyWave — used to call take_damage on castle contact
 var _castle: Node = null
 var _sprite: AnimatedSprite2D
@@ -65,6 +72,7 @@ const TYPE_SPRITE_PREFIX := {
 	EnemyType.ARCHER:   "enemy_archer",
 	EnemyType.CAVALIER: "enemy_cavalier",
 	EnemyType.HEALER:   "enemy_healer",
+	EnemyType.SHIELDER: "enemy_shielder",
 }
 
 func _ready() -> void:
@@ -93,13 +101,23 @@ func _reload_frames(etype: EnemyType, vtier: int = 0) -> void:
 	frames.set_animation_speed("walk", 8.0)
 	frames.set_animation_loop("walk", true)
 	for i in range(4):
+		var tex: Texture2D = null
+		## Primary path (with tier suffix for T1-T3)
 		var path: String = "res://assets/sprites/garrison/%s_%d.png" % [prefix, i]
-		var tex: Texture2D = load(path)
+		if ResourceLoader.exists(path):
+			tex = load(path)
+		## T0 base fallback (same type, no tier suffix)
+		if tex == null and prefix != base:
+			var base_path: String = "res://assets/sprites/garrison/%s_%d.png" % [base, i]
+			if ResourceLoader.exists(base_path):
+				tex = load(base_path)
+		## Ultimate fallback: infantry T0 (always imported)
 		if tex == null:
-			## Fallback to T0 sprites when tier variant is missing
-			var fallback: String = "res://assets/sprites/garrison/%s_%d.png" % [base, i]
-			tex = load(fallback)
-		frames.add_frame("walk", tex)
+			var inf_path: String = "res://assets/sprites/garrison/enemy_infantry_%d.png" % i
+			if ResourceLoader.exists(inf_path):
+				tex = load(inf_path)
+		if tex != null:
+			frames.add_frame("walk", tex)
 	_sprite.sprite_frames = frames
 	_sprite.play("walk")
 
@@ -116,7 +134,7 @@ func _process(delta: float) -> void:
 			speed = _base_speed
 			_slow_timer = 0.0
 			if _sprite != null:
-				_sprite.modulate = Color.WHITE
+				_sprite.modulate = _base_modulate
 
 	# Poison / burn DoT tick
 	if _poison_timer > 0.0:
@@ -157,20 +175,30 @@ func _draw() -> void:
 	var ratio := float(hp) / float(max(_max_hp, 1))
 	draw_rect(Rect2(-20.0, -52.0, bar_w, 6.0), Color(0.1, 0.1, 0.1, 0.9))
 	draw_rect(Rect2(-20.0, -52.0, bar_w * ratio, 6.0), Color("#E53935"))
+	## SHIELDER: blue shield ring while shield is active
+	if _shield_active:
+		draw_arc(Vector2.ZERO, 18.0, 0.0, TAU, 24, Color(0.50, 0.72, 1.0, 0.72), 2.5)
 
 ## Reduce HP. If HP drops to 0, emit enemy_died and mark inactive.
 ## EnemyWave calls deactivate() after receiving enemy_died.
+## SHIELDER: takes 40% damage while shield is active (shield breaks at 50% HP).
 func take_damage(amount: int) -> void:
 	if not _alive:
 		return
+	## SHIELDER shield absorbs 60% of incoming damage
+	if _shield_active:
+		amount = maxi(1, roundi(float(amount) * 0.40))
 	hp -= amount
+	## Shield breaks once HP falls to or below 50% of max
+	if _shield_active and hp <= _max_hp / 2:
+		_shield_active = false
 	queue_redraw()
-	## Brief white flash — preserves current tint so slow/stun tint is restored correctly
+	## Brief bright flash — preserves current tint so slow/stun tint is restored correctly
 	if _sprite != null:
 		var tw := create_tween()
 		tw.tween_property(_sprite, "modulate", Color(2.0, 2.0, 2.0), 0.06)
 		tw.tween_property(_sprite, "modulate",
-				Color(0.50, 0.70, 1.0) if _slow_timer > 0.0 else Color.WHITE, 0.12)
+				Color(0.50, 0.70, 1.0) if _slow_timer > 0.0 else _base_modulate, 0.12)
 	if hp <= 0:
 		_alive = false
 		_spawn_death_particles(position, _visual_tier)
@@ -198,9 +226,14 @@ func activate(start_pos: Vector2, etype: EnemyType = EnemyType.INFANTRY, visual_
 	_poison_timer = 0.0
 	_poison_dps   = 0.0
 	_poison_tick  = 0.0
+	## SHIELDER: start with shield active; all others: no shield
+	_shield_active = (etype == EnemyType.SHIELDER)
 	_alive = true
+	## Apply type-specific modulate tint
+	var tint: Color = stats.get("tint", Color.WHITE) as Color
+	_base_modulate = tint
 	if _sprite != null:
-		_sprite.modulate = Color.WHITE  ## Type distinction is in the sprite, not tint
+		_sprite.modulate = tint
 	$CollisionShape2D.set_deferred("disabled", false)
 	show()
 	queue_redraw()
@@ -283,6 +316,33 @@ func show_status_effect(effect_type: int, duration: float) -> void:
 			if _status_sprite == sprite_ref:
 				_status_sprite = null)
 
+## Briefly show the spell-type hit VFX sprite over this enemy.
+## spell_idx: 0=fire, 1=lightning, 2=ice — matches hero_spells SPELLS array order.
+## Spawns a Sprite2D child, scales it in then fades it out in ~0.4s.
+func show_spell_hit_effect(spell_idx: int) -> void:
+	if not _alive:
+		return
+	const HIT_TEXTURES: Array[String] = [
+		"res://assets/sprites/garrison/spell_hit_fire.png",
+		"res://assets/sprites/garrison/spell_hit_lightning.png",
+		"res://assets/sprites/garrison/spell_hit_ice.png",
+	]
+	var tex: Texture2D = load(HIT_TEXTURES[clampi(spell_idx, 0, 2)])
+	if tex == null:
+		return
+	var hit_spr := Sprite2D.new()
+	hit_spr.texture = tex
+	hit_spr.scale = Vector2(0.4, 0.4)
+	hit_spr.position = Vector2(0.0, -12.0)
+	hit_spr.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	add_child(hit_spr)
+	## Pop in: 0.4→1.1 then settle to 1.0, fade out
+	var tw := create_tween()
+	tw.tween_property(hit_spr, "scale", Vector2(1.1, 1.1), 0.08)
+	tw.tween_property(hit_spr, "scale", Vector2(0.85, 0.85), 0.05)
+	tw.tween_property(hit_spr, "modulate:a", 0.0, 0.25)
+	tw.tween_callback(hit_spr.queue_free)
+
 ## Healer pulse — restore HP to nearby allies within HEAL_RADIUS.
 func _pulse_heal() -> void:
 	for e: Node in get_tree().get_nodes_in_group("enemies"):
@@ -297,14 +357,53 @@ func _pulse_heal() -> void:
 			enemy.hp = mini(enemy.hp + HEAL_AMOUNT, enemy._max_hp)
 			enemy.queue_redraw()
 
+## Called by EnemyWave after activate() when this enemy is the wave boss.
+## Adds a red CPUParticles2D aura child to make the boss visually distinct.
+## Pass is_boss=false to remove the aura when the enemy is returned to the pool.
+func set_boss_visual(is_boss: bool) -> void:
+	var existing: Node = get_node_or_null("BossAura")
+	if existing != null:
+		existing.queue_free()
+	if not is_boss:
+		return
+	var aura := CPUParticles2D.new()
+	aura.name = "BossAura"
+	aura.emitting = true
+	aura.amount = 22
+	aura.lifetime = 0.9
+	aura.color = Color(1.0, 0.20, 0.05, 0.75)
+	aura.emission_sphere_radius = 26.0
+	aura.explosiveness = 0.0
+	aura.direction = Vector2.UP
+	aura.spread = 180.0
+	aura.gravity = Vector2.ZERO
+	aura.initial_velocity_min = 18.0
+	aura.initial_velocity_max = 32.0
+	aura.scale_amount_min = 2.0
+	aura.scale_amount_max = 4.0
+	add_child(aura)
+
 ## Spawn a one-shot CPUParticles2D burst at the death position.
-## Tier 0: no particles (pool return is instant). T1: golden magic. T2: orange debris. T3: cyan plasma.
+## T0: small yellow flash ring. T1: golden magic. T2: orange debris. T3: cyan plasma.
 ## Particles are added to the scene root so they outlive the pooled enemy node's hide().
 func _spawn_death_particles(death_pos: Vector2, vtier: int) -> void:
-	if vtier <= 0:
-		return  ## T0: simple flash only — no extra particles
 	var scene_root: Node = get_tree().current_scene
 	if scene_root == null:
+		return
+	if vtier <= 0:
+		## T0: simple expanding yellow ring flash — cheap, no CPUParticles2D
+		var flash := Node2D.new()
+		flash.global_position = death_pos
+		scene_root.add_child(flash)
+		var ring := ColorRect.new()
+		ring.size = Vector2(22.0, 22.0)
+		ring.position = Vector2(-11.0, -11.0)
+		ring.color = Color(1.0, 0.88, 0.30, 0.90)
+		flash.add_child(ring)
+		var tw := flash.create_tween()
+		tw.tween_property(flash, "scale", Vector2(2.4, 2.4), 0.20)
+		tw.parallel().tween_property(ring, "modulate:a", 0.0, 0.20)
+		tw.tween_callback(flash.queue_free)
 		return
 	var p := CPUParticles2D.new()
 	p.global_position = death_pos
@@ -336,6 +435,11 @@ func _spawn_death_particles(death_pos: Vector2, vtier: int) -> void:
 ## Pool API — hide and disable this enemy. Called after enemy_died or on session reset.
 func deactivate() -> void:
 	_alive = false
+	_shield_active = false
+	## Remove boss aura if present (enemy returns to pool as a regular unit)
+	var boss_aura: Node = get_node_or_null("BossAura")
+	if boss_aura != null:
+		boss_aura.queue_free()
 	if has_node("CollisionShape2D"):
 		$CollisionShape2D.set_deferred("disabled", true)
 	hide()

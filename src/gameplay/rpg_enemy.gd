@@ -26,11 +26,11 @@ const ATTACK_COOLDOWN  := 1.8   ## Seconds between hits
 ## 0=Infantry (tier 0), 1=Archer (tier 1), 2=Elite (tier 2).
 var _visual_type: int = 0
 
-## Kenney Medieval RTS unit sprites per visual type (CC0, 64×64).
+## Garrison chibi RPG enemy sprites — goblin/dark-elf/skeleton-mage (48×48).
 const UNIT_SPRITE_PATHS: Array[String] = [
-	"res://assets/sprites/kenney_downloads/medieval-rts/PNG/Default size/Unit/medievalUnit_01.png",
-	"res://assets/sprites/kenney_downloads/medieval-rts/PNG/Default size/Unit/medievalUnit_09.png",
-	"res://assets/sprites/kenney_downloads/medieval-rts/PNG/Default size/Unit/medievalUnit_17.png",
+	"res://assets/sprites/garrison/rpg_enemy_0.png",
+	"res://assets/sprites/garrison/rpg_enemy_1.png",
+	"res://assets/sprites/garrison/rpg_enemy_2.png",
 ]
 
 ## Pool-compatible flag — hero_spells._apply_spell() checks enemy.get("_alive").
@@ -71,8 +71,10 @@ func setup(camp_pos: Vector2, hero: Node2D) -> void:
 func _build_visuals() -> void:
 	## Unit sprite — replaces the red square; type set by RpgEnemyCamp.
 	_unit_sprite = Sprite2D.new()
-	_unit_sprite.texture = load(UNIT_SPRITE_PATHS[clampi(_visual_type, 0, 2)])
-	_unit_sprite.scale = Vector2(0.5, 0.5)
+	var tex_path: String = UNIT_SPRITE_PATHS[clampi(_visual_type, 0, 2)]
+	if ResourceLoader.exists(tex_path):
+		_unit_sprite.texture = load(tex_path)
+	_unit_sprite.scale = Vector2(0.75, 0.75)
 	add_child(_unit_sprite)
 
 	## HP bar background (dark)

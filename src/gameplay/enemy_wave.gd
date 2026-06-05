@@ -17,9 +17,9 @@ extends Node
 
 ## Budget system
 const BASE_BUDGET      := 80     ## Threat budget at wave 1
-const BUDGET_PER_WAVE  := 15     ## Added per wave number (1-indexed)
-## Threat cost per enemy type [INFANTRY, ARCHER, CAVALIER, HEALER]
-const ENEMY_COSTS: Array[int] = [8, 12, 22, 18]
+const BUDGET_PER_WAVE  := 18     ## Added per wave number (steeper than original 15)
+## Threat cost per enemy type [INFANTRY, ARCHER, CAVALIER, HEALER, SHIELDER]
+const ENEMY_COSTS: Array[int] = [8, 12, 22, 18, 20]
 const MIN_WAVE_COUNT   := 4      ## Floor — always at least 4 enemies
 const MAX_WAVE_COUNT   := 40     ## Ceiling — pool is 30, keep some headroom
 
@@ -27,6 +27,7 @@ const MAX_WAVE_COUNT   := 40     ## Ceiling — pool is 30, keep some headroom
 const UNLOCK_ARCHER   := 3
 const UNLOCK_CAVALIER := 5
 const UNLOCK_HEALER   := 8
+const UNLOCK_SHIELDER := 6       ## Shielders appear from wave 6
 
 ## Wave tags
 const TAG_NORMAL       := "NORMAL"
@@ -36,13 +37,13 @@ const TAG_RUSH         := "RUSH"
 const TAG_HEALER_SURGE := "HEALER_SURGE"
 
 ## Boss / Elite visual and stat multipliers
-const ELITE_HP_MULT := 2.0
-const BOSS_HP_MULT  := 5.0
+const ELITE_HP_MULT := 2.5   ## Elites are noticeably tankier (was 2.0)
+const BOSS_HP_MULT  := 6.0   ## Bosses are very beefy (was 5.0)
 const BOSS_SCALE    := 1.6   ## Visual scale applied to boss node
 const BOSS_GOLD_MULT := 3    ## Boss drops 3× gold
 
 ## Stat scaling per 10-wave cycle (applied to all enemies, compound)
-const HP_SCALE_PER_CYCLE    := 0.20  ## +20% HP per cycle
+const HP_SCALE_PER_CYCLE    := 0.25  ## +25% HP per cycle (was 0.20 — steeper)
 const SPEED_SCALE_PER_CYCLE := 0.08  ## +8% speed per cycle
 const RUSH_SPEED_BONUS      := 1.35  ## Rush tag: ×1.35 speed on top of cycle scaling
 
@@ -187,7 +188,7 @@ func get_next_wave_preview() -> Dictionary:
 	var total_w: int = 0
 	for w: int in weights:
 		total_w += w
-	var type_icons: Array[String] = ["⚔", "🏹", "🐎", "💚"]
+	var type_icons: Array[String] = ["⚔", "🏹", "🐎", "💚", "🛡"]
 	var parts: Array[String] = []
 	for i: int in range(weights.size()):
 		if weights[i] > 0 and total_w > 0:
@@ -212,17 +213,19 @@ func _compute_wave_tag(wave_num: int) -> String:
 		return TAG_HEALER_SURGE
 	return TAG_NORMAL
 
-## Return the type weight array [INFANTRY, ARCHER, CAVALIER, HEALER] for a wave.
+## Return the type weight array [INFANTRY, ARCHER, CAVALIER, HEALER, SHIELDER] for a wave.
 ## Types unlock progressively; healer surge boosts healer weight.
 func _compute_type_weights(wave_num: int) -> Array[int]:
 	var n: int = wave_num + 1
-	var w: Array[int] = [10, 0, 0, 0]
+	var w: Array[int] = [10, 0, 0, 0, 0]
 	if n >= UNLOCK_ARCHER:
 		w[0] = 7; w[1] = 3
 	if n >= UNLOCK_CAVALIER:
 		w[0] = 5; w[2] = 2
 	if n >= UNLOCK_HEALER:
 		w[0] = 3; w[3] = 1
+	if n >= UNLOCK_SHIELDER:
+		w[0] = maxi(w[0] - 2, 2); w[4] = 2
 	if _wave_tag == TAG_HEALER_SURGE:
 		w[3] = maxi(w[3], 4)
 	return w
@@ -301,6 +304,9 @@ func _spawn_enemy() -> void:
 	node._max_hp = node.hp
 	node.speed = node.speed * spd_mult
 	node._base_speed = node.speed
+	## Boss CPUParticles2D aura — red embers orbiting the boss unit
+	if node.has_method("set_boss_visual"):
+		node.set_boss_visual(is_boss)
 
 	node.enemy_died.connect(_on_enemy_died.bind(node), CONNECT_ONE_SHOT)
 	_active_enemies += 1

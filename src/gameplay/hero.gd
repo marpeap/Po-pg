@@ -70,6 +70,9 @@ const LEVEL_NAMES: Array[String] = ["Novice", "Guerrier", "Champion"]
 var _xp: int = 0
 var _xp_level: int = 0  ## 0=Novice, 1=Guerrier, 2=Champion
 
+## Aura emitter — persistent ambient glow around the hero, tier-driven.
+var _aura: CPUParticles2D = null
+
 ## Emitted when HP drops to 0 while exploring. Main listens to trigger _do_return().
 signal hp_changed(new_hp: int)
 signal died_in_exploration
@@ -107,6 +110,16 @@ func _ready() -> void:
 	add_child(_anim)
 	_visual_tier = 0
 
+	# Aura emitter — added after shadow so it renders behind the walk sprite
+	_aura = CPUParticles2D.new()
+	_aura.emitting = false
+	_aura.position = Vector2(0.0, 4.0)  ## Slightly below hero center for grounded feel
+	add_child(_aura)
+
+	# Connect to HeroProgression level-ups (if autoload present)
+	if HeroProgression != null:
+		HeroProgression.level_up.connect(_on_rpg_level_up)
+
 ## Update hero walk animation to tier-appropriate sprites.
 ## T0 Medieval, T1 Paladin Solaire, T2 Chevalier-Automate, T3 Commandant Néo-Synthétique.
 ## Called by Main when wave tier threshold is crossed.
@@ -128,6 +141,105 @@ func set_visual_tier(tier: int) -> void:
 	if _anim != null:
 		_anim.sprite_frames = frames
 		_anim.play("walk")
+	_update_aura(tier)
+
+## Update (or create) the persistent ambient aura around the hero.
+## Tier 0 = off, T1 = golden sparkles, T2 = orange embers, T3 = cyan plasma.
+func _update_aura(tier: int) -> void:
+	if _aura == null:
+		return
+	match clampi(tier, 0, 3):
+		0:
+			_aura.emitting = false
+		1:  ## Runic — soft golden sparkles
+			_aura.amount = 14
+			_aura.lifetime = 1.2
+			_aura.explosiveness = 0.0
+			_aura.spread = 180.0
+			_aura.gravity = Vector2.ZERO
+			_aura.initial_velocity_min = 12.0
+			_aura.initial_velocity_max = 22.0
+			_aura.scale_amount_min = 1.5
+			_aura.scale_amount_max = 3.0
+			_aura.color = Color(1.0, 0.88, 0.28, 0.7)
+			_aura.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+			_aura.emission_sphere_radius = 22.0
+			_aura.emitting = true
+		2:  ## Steampunk — orange ember ring
+			_aura.amount = 22
+			_aura.lifetime = 0.9
+			_aura.explosiveness = 0.0
+			_aura.spread = 180.0
+			_aura.gravity = Vector2(0.0, -18.0)
+			_aura.initial_velocity_min = 18.0
+			_aura.initial_velocity_max = 35.0
+			_aura.scale_amount_min = 2.0
+			_aura.scale_amount_max = 4.5
+			_aura.color = Color(1.0, 0.42, 0.10, 0.75)
+			_aura.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+			_aura.emission_sphere_radius = 26.0
+			_aura.emitting = true
+		3:  ## Cosmic — cyan plasma disintegration
+			_aura.amount = 32
+			_aura.lifetime = 0.75
+			_aura.explosiveness = 0.0
+			_aura.spread = 180.0
+			_aura.gravity = Vector2.ZERO
+			_aura.initial_velocity_min = 25.0
+			_aura.initial_velocity_max = 55.0
+			_aura.scale_amount_min = 2.5
+			_aura.scale_amount_max = 5.0
+			_aura.color = Color(0.08, 0.92, 1.0, 0.80)
+			_aura.emission_shape = CPUParticles2D.EMISSION_SHAPE_SPHERE
+			_aura.emission_sphere_radius = 30.0
+			_aura.emitting = true
+
+## Called when HeroProgression (RPG leveling) fires level_up.
+## Spawns a burst of celebratory particles + a floating NIVEAU text label.
+func _on_rpg_level_up(new_level: int) -> void:
+	if not is_inside_tree():
+		return
+	## Particle burst — color scales with level milestone
+	var burst := CPUParticles2D.new()
+	burst.one_shot = true
+	burst.emitting = true
+	burst.amount = 24
+	burst.lifetime = 0.8
+	burst.explosiveness = 0.95
+	burst.spread = 180.0
+	burst.gravity = Vector2(0.0, -60.0)
+	burst.initial_velocity_min = 55.0
+	burst.initial_velocity_max = 120.0
+	burst.scale_amount_min = 3.0
+	burst.scale_amount_max = 6.0
+	## Color ramps: every 10 levels = new colour milestone
+	var lvl_tier: int = (new_level - 1) / 10
+	match lvl_tier:
+		0: burst.color = Color(1.0, 0.88, 0.28)   ## Golden — L1–10
+		1: burst.color = Color(1.0, 0.45, 0.10)   ## Orange — L11–20
+		2: burst.color = Color(0.28, 0.80, 1.0)   ## Cyan   — L21–30
+		3: burst.color = Color(0.70, 0.28, 1.0)   ## Purple — L31–40
+		_: burst.color = Color(1.0, 0.95, 1.0)   ## White  — L41–50
+	add_child(burst)
+	get_tree().create_timer(burst.lifetime + 0.1).timeout.connect(
+		func() -> void:
+			if is_instance_valid(burst):
+				burst.queue_free())
+
+	## Floating "+Niveau N!" label rising upward then fading
+	var lbl := Label.new()
+	lbl.text = "+Niveau %d !" % new_level
+	lbl.add_theme_font_size_override("font_size", 11)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.92, 0.32))
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.7))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.position = Vector2(-30.0, -44.0)
+	add_child(lbl)
+	var tw := create_tween()
+	tw.tween_property(lbl, "position:y", lbl.position.y - 38.0, 1.0)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 1.0)
+	tw.tween_callback(lbl.queue_free)
 
 func _input(event: InputEvent) -> void:
 	var s := GameStateMachine.current_state

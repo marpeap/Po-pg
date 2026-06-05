@@ -113,6 +113,9 @@ func _apply_spell(spell: Dictionary, center: Vector2, idx: int) -> void:
 		## Apply slow/stun when spell has a duration (Foudre stun + Glace slow)
 		if slow_d > 0.0 and enemy.has_method("apply_slow"):
 			enemy.apply_slow(slow_f, slow_d)
+		## Spell hit impact VFX sprite (fire/lightning/ice burst)
+		if enemy.has_method("show_spell_hit_effect"):
+			enemy.show_spell_hit_effect(idx)
 		## Status effect visual overlay on hit enemy
 		if enemy.has_method("show_status_effect"):
 			var effect_dur: float = slow_d if slow_d > 0.0 else 2.0

@@ -8,17 +8,17 @@
 ## Visible uniquement en mode EXPLORING.
 extends Node2D
 
-## Kenney Medieval RTS sprites disponibles pour créatures
-const KENNEY := "res://assets/sprites/kenney_downloads/medieval-rts/PNG/Default size/"
+## Garrison chibi ambient creature sprites (28–36px, side-view).
+const GARRISON := "res://assets/sprites/garrison/"
 
 ## Types de créatures avec leurs attributs
 ## [sprite_path, scale, tint, speed, flee_radius]
 const CREATURE_TYPES: Array[Array] = [
-	["Unit/medievalUnit_26.png", 0.35, Color(0.80, 0.70, 0.55), 40.0, 90.0],  ## Lapin brun
-	["Unit/medievalUnit_26.png", 0.30, Color(0.55, 0.70, 0.55), 35.0, 80.0],  ## Ecureuil vert
-	["Unit/medievalUnit_27.png", 0.40, Color(0.65, 0.65, 0.80), 50.0, 100.0], ## Oiseau gris
-	["Unit/medievalUnit_25.png", 0.45, Color(0.85, 0.75, 0.60), 30.0, 70.0],  ## Cerf doré
-	["Unit/medievalUnit_28.png", 0.30, Color(0.40, 0.40, 0.45), 60.0, 120.0], ## Corbeau sombre
+	["ambient_bunny.png",    1.0, Color(1.0,  1.0,  1.0),  40.0,  90.0],  ## Lapin blanc
+	["ambient_squirrel.png", 1.0, Color(1.0,  1.0,  1.0),  35.0,  80.0],  ## Écureuil orange
+	["ambient_bird.png",     1.0, Color(1.0,  1.0,  1.0),  50.0, 100.0],  ## Oiseau bleu
+	["ambient_deer.png",     1.0, Color(1.0,  1.0,  1.0),  30.0,  70.0],  ## Cerf doré
+	["ambient_crow.png",     1.0, Color(1.0,  1.0,  1.0),  60.0, 120.0],  ## Corbeau noir
 ]
 
 ## Nombre max de créatures actives
@@ -159,7 +159,7 @@ func _activate(c: AmbientCreature, pos: Vector2) -> void:
 	c.type_idx = randi() % CREATURE_TYPES.size()
 	var t: Array = CREATURE_TYPES[c.type_idx]
 	## Charger texture
-	var tex: Texture2D = load(KENNEY + str(t[0]))
+	var tex: Texture2D = load(GARRISON + str(t[0]))
 	if tex != null:
 		c.sprite.texture = tex
 	c.sprite.scale = Vector2(float(t[1]), float(t[1]))
