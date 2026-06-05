@@ -139,10 +139,11 @@ func test_stat_multiplier_increases_at_cycle_1() -> void:
 		"HP multiplier must increase at wave 10 (start of cycle 1)")
 	ew.free()
 
-func test_stat_multiplier_at_cycle_1_is_1_point_2() -> void:
+func test_stat_multiplier_at_cycle_1_is_1_point_25() -> void:
+	## HP_SCALE_PER_CYCLE was updated to 0.25 in Iteration 4 for steeper scaling.
 	var ew: Node = _make_wave()
-	assert_almost_eq(ew.get_stat_multiplier(10), 1.2, 0.001,
-		"HP multiplier must be 1.2 at wave 10 (cycle 1, +20%)")
+	assert_almost_eq(ew.get_stat_multiplier(10), 1.25, 0.001,
+		"HP multiplier must be 1.25 at wave 10 (cycle 1, +25%)")
 	ew.free()
 
 # ---------------------------------------------------------------------------

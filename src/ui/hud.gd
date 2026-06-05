@@ -1279,14 +1279,20 @@ func show_npc_popup(npc: Node, npc_type: int, title: String) -> void:
 	_npc_current = npc
 	if _npc_panel == null:
 		_build_npc_panel(get_parent())
+	## Prefer rich personality dialogue from the NPC itself; fall back to generic desc.
 	const NPC_DESCS: Array[String] = [
 		"Ce marchant vend des ressources rares contre de l'or.\nTaper Interagir pour acheter.",
 		"Cet eclaireur peut reveler les caves cachees proches.",
 		"Le sage vous transmet son savoir. +80 XP immediat.",
 		"Le barde chante pour vous. Vitesse hero +20 % pendant 30 s.",
-		"Le guerisseur vous soigne et partage son experience. +30 XP.",
+		"Le guerisseur partage son experience. +30 XP.",
 	]
 	var desc: String = NPC_DESCS[clampi(npc_type, 0, 4)]
+	## If the NPC supports rich dialogue, use it instead.
+	if npc != null and npc.has_method("get_dialogue_text"):
+		var rich: String = npc.get_dialogue_text()
+		if rich.length() > 0:
+			desc = rich
 	if _npc_title_lbl != null:
 		_npc_title_lbl.text = title
 	if _npc_desc_lbl != null:

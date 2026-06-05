@@ -943,6 +943,93 @@ def gen_enemy_shielder():
 
 
 # ════════════════════════════════════════════════════════════════════════════
+# RARE RESOURCE SPRITES  —  32×32  (Iteration 5)
+# ════════════════════════════════════════════════════════════════════════════
+
+def gen_resource_glowing_mushroom():
+    """Cyan-glowing mushroom for GLOWING_MUSHROOM (type 34). 32×32."""
+    W, H = 32, 32
+    img = new(W, H)
+    d = ImageDraw.Draw(img)
+    cx = W * S // 2
+
+    # Stalk — pale teal
+    rect(d, cx - px(3), px(20), cx + px(3), px(29), (148, 220, 200, 255))
+    # Cap base — rounded, dark teal
+    ell(d, cx, px(17), px(12), px(7), (38, 180, 158, 255))
+    # Cap dome — bright cyan
+    ell(d, cx, px(13), px(10), px(8), (80, 230, 210, 255))
+    # Cap highlight — near-white cyan glow
+    ell(d, cx - px(2), px(10), px(5), px(4), (200, 255, 248, 220))
+    # Glow spots on cap (bioluminescent dots)
+    for dx_px, dy_px in [(-px(6), px(15)), (px(5), px(14)), (0, px(19))]:
+        ell(d, cx + dx_px, dy_px, px(2), px(2), (120, 255, 230, 240))
+    # Ground shadow
+    ell(d, cx, px(30), px(5), px(1), (0, 0, 0, 60))
+
+    save(img, "res_glowing_mushroom.png", W, H, outline=True, glow=(40, 200, 180))
+
+
+def gen_resource_wild_honey():
+    """Amber honeycomb blob for WILD_HONEY (type 14). 32×32."""
+    W, H = 32, 32
+    img = new(W, H)
+    d = ImageDraw.Draw(img)
+    cx = W * S // 2
+    cy = H * S // 2
+
+    # Honey drop — large amber oval
+    ell(d, cx, cy + px(3), px(11), px(12), (200, 120, 10, 255))
+    # Inner honey highlight
+    ell(d, cx - px(2), cy, px(7), px(8), (240, 165, 30, 255))
+    # Bright center glint
+    ell(d, cx - px(3), cy - px(2), px(3), px(3), (255, 215, 100, 230))
+    # Honeycomb grid lines (3 hex cells)
+    HLINE = (160, 80, 5, 180)
+    for hx, hy in [(-px(3), -px(4)), (px(4), -px(4)), (0, px(2))]:
+        ell(d, cx + hx, cy + hy, px(3), px(3), HLINE)
+    # Top drip
+    ell(d, cx + px(2), cy - px(8), px(3), px(4), (220, 140, 20, 230))
+    # Ground shadow
+    ell(d, cx, cy + px(13), px(7), px(2), (0, 0, 0, 55))
+
+    save(img, "res_wild_honey.png", W, H, outline=True, glow=(180, 120, 0))
+
+
+def gen_resource_quartz_crystal():
+    """Lavender crystal cluster for QUARTZ (type 27). 32×32."""
+    W, H = 32, 32
+    img = new(W, H)
+    d = ImageDraw.Draw(img)
+    cx = W * S // 2
+
+    QBASE  = (170, 130, 210, 255)  # mid lavender
+    QLIGHT = (210, 180, 240, 255)  # pale lavender face
+    QDARK  = (100,  70, 150, 255)  # dark shadow face
+    QGLINT = (240, 225, 255, 230)  # bright face glint
+
+    # Ground cluster base
+    ell(d, cx, px(28), px(9), px(3), (80, 60, 110, 180))
+
+    # Crystal 1 — tallest, center
+    poly(d, [(cx - px(4), px(26)), (cx, px(7)), (cx + px(4), px(26))], QBASE)
+    poly(d, [(cx, px(7)), (cx + px(4), px(26)), (cx + px(6), px(26))], QDARK)
+    poly(d, [(cx - px(4), px(26)), (cx - px(6), px(26)), (cx, px(7))], QLIGHT)
+    # Glint on face 1
+    poly(d, [(cx - px(2), px(11)), (cx - px(1), px(9)), (cx + px(1), px(11))], QGLINT)
+
+    # Crystal 2 — short, right
+    poly(d, [(cx + px(5), px(26)), (cx + px(8), px(16)), (cx + px(11), px(26))], QBASE)
+    poly(d, [(cx + px(8), px(16)), (cx + px(11), px(26)), (cx + px(12), px(26))], QDARK)
+
+    # Crystal 3 — short, left
+    poly(d, [(cx - px(11), px(26)), (cx - px(8), px(18)), (cx - px(5), px(26))], QBASE)
+    poly(d, [(cx - px(8), px(18)), (cx - px(5), px(26)), (cx - px(4), px(26))], QLIGHT)
+
+    save(img, "res_quartz_crystal.png", W, H, outline=True, glow=(150, 90, 220))
+
+
+# ════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -974,5 +1061,10 @@ if __name__ == "__main__":
 
     print("\n── Enemy Shielder (Iteration 4) ───────────────────")
     gen_enemy_shielder()
+
+    print("\n── Rare Resource Sprites (Iteration 5) ───────────")
+    gen_resource_glowing_mushroom()
+    gen_resource_wild_honey()
+    gen_resource_quartz_crystal()
 
     print(f"\n✓ All sprites written to: {OUT}\n")

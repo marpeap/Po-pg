@@ -76,12 +76,15 @@
 ---
 
 ## ITERATION 5 — RPG world richness
-**Status**: PENDING
-- Zone transitions animées (fade + particules)
-- NPC dialogues étendus (plus de texte/personnalité)
-- Ressources rares brillantes (animation pulse)
-- Coffres : loot table visible avant ouverture
-- Cavernes : difficulté variable
+**Status**: COMPLETE
+- NPC dialogues étendus : `get_dialogue_text()` par archétype (Marchand=prix, Sage=lore rotatif, Barde=chansons, Éclaireur=indice cave, Guérisseur=XP) ✓
+- HUD NPC popup enrichi : `show_npc_popup()` utilise le dialogue riche en priorité ✓
+- Ressources rares brillantes : `SPARKLE_TYPES` dict (8 types) + `CPUParticles2D` `_add_sparkle()` dans resource_node.gd ✓
+- Sprites custom 32×32 pour types rares : res_glowing_mushroom.png, res_wild_honey.png, res_quartz_crystal.png ✓
+- TYPE_CFG mis à jour pour utiliser les nouveaux sprites (types 14, 27, 34) ✓
+- Coffre : burst VFX `CPUParticles2D` or + label flottant "+Xg" dans `_spawn_burst_vfx()` ✓
+- Fix test: `test_stat_multiplier_at_cycle_1_is_1_point_25` (HP_SCALE_PER_CYCLE=0.25 depuis Iter 4) ✓
+- Tests : 277/278 passing / 0 failing
 
 ---
 

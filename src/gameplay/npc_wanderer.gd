@@ -232,6 +232,39 @@ func _resolve_healer() -> void:
 	HeroProgression.add_xp(30)
 	## Future: emit heal_hero signal when hero HP system exists.
 
+## Returns a personality-specific opening dialogue line displayed in the popup.
+## Merchant shows their top item price; Sage/Bard rotate lore/song snippets.
+func get_dialogue_text() -> String:
+	match _npc_type:
+		NpcType.MERCHANT:
+			var keys: Array = MERCHANT_SHOP.keys()
+			if not keys.is_empty():
+				var entry: Dictionary = MERCHANT_SHOP[keys[0]]
+				return "Psst... premier article en stock pour seulement %dg.\nTaper Interagir pour acheter." % entry.cost
+			return "J'ai des ressources rares pour qui a les moyens!"
+		NpcType.SCOUT:
+			return "Ces forets cachent bien leurs secrets...\nJe peux vous indiquer les caves proches si vous interagissez."
+		NpcType.SAGE:
+			var lines: Array[String] = [
+				"La connaissance est la seule richesse\nqu'on ne peut pas voler.",
+				"Ce monde a une memoire longue.\nEcoute, et il te parlera.",
+				"Les anciens ont laisse des indices partout,\npour qui sait chercher.",
+			]
+			return lines[randi() % lines.size()]
+		NpcType.BARD:
+			var songs: Array[String] = [
+				"Brave guerrier, ton coeur est ton armure!\n" +
+					"Interagir pour un boost de vitesse.",
+				"La route est longue mais les pas sont legers...\n" +
+					"Interagir pour un boost de vitesse.",
+				"En avant, en avant, le vent nous porte!\n" +
+					"Interagir pour un boost de vitesse.",
+			]
+			return songs[randi() % songs.size()]
+		NpcType.HEALER:
+			return "Vous semblez fatigue, ami.\nInteragir pour gagner de l'experience et une benediction."
+	return ""
+
 func _on_input_event(_viewport: Viewport, event: InputEvent, _shape_idx: int) -> void:
 	if not _active:
 		return
